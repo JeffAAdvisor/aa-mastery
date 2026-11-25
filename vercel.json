@@ -12,8 +12,12 @@
     { "source": "/uc-tactical/", "destination": "/uc-tactical/index.html" },
     { "source": "/uc-tactical/form", "destination": "/uc-tactical/form.html" },
     { "source": "/uc-tactical/form/", "destination": "/uc-tactical/form.html" },
+    { "source": "/projects", "destination": "/projects/index.html" },
+    { "source": "/projects/", "destination": "/projects/index.html" },
+    { "source": "/projects/board", "destination": "/projects/board.html" },
+    { "source": "/projects/board/", "destination": "/projects/board.html" },
     {
-      "source": "/((?!og-image\\.png$|qc-engine\\.js$|extraction-engine\\.js$|cir-docs\\.js$|accent-trainer|wellness|tactical|uc-tactical|protocols/).*)",
+      "source": "/((?!og-image\\.png$|qc-engine\\.js$|extraction-engine\\.js$|cir-docs\\.js$|accent-trainer|wellness|tactical|uc-tactical|projects/|projects$|protocols/).*)",
       "destination": "/index.html"
     }
   ]
