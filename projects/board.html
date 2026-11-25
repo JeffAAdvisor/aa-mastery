@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>AA Projects Board</title>
+<link rel="icon" href="/og-image.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/tactical/aa.css">
+<link rel="stylesheet" href="/projects/pj.css">
+<style>
+  .mast-in,.wrap.board{max-width:1400px}
+  .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:12px 14px;margin-bottom:18px}
+  .search{flex:1;min-width:220px;position:relative}
+  .search input{width:100%;padding:10px 12px 10px 36px;border-radius:999px;border:1px solid var(--line2);background:var(--card2);
+    color:var(--text);outline:none;font-size:14px}
+  .search input:focus{border-color:var(--gold)}
+  .search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);opacity:.6}
+  .tally{font-size:12.5px;color:var(--muted)}
+
+  .grp{margin-bottom:22px}
+  .grp-head{display:flex;align-items:center;gap:10px;padding:4px 2px 10px;cursor:pointer;user-select:none;background:none;border:0;width:100%;text-align:left}
+  .grp-head .chev{transition:transform .15s;color:var(--gc)}
+  .grp.closed .grp-head .chev{transform:rotate(-90deg)}
+  .grp-head h2{font-size:18px;font-weight:700;color:var(--gc)}
+  .grp-head .cnt{font-size:13px;color:var(--muted)}
+  .grp.closed .tbl-wrap,.grp.closed .add-row{display:none}
+
+  .tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-left:4px solid var(--gc);border-radius:12px;background:var(--card)}
+  table{border-collapse:separate;border-spacing:0;width:100%;font-size:13.5px}
+  th,td{padding:9px 12px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap;max-width:240px;overflow:hidden;text-overflow:ellipsis}
+  th{font-size:11.5px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);background:var(--card2);
+    position:sticky;top:0;cursor:pointer}
+  th:hover{color:var(--gold-light)}
+  th .dir{color:var(--gold)}
+  td.num,th.num{text-align:right}
+  tbody tr{cursor:pointer}
+  tbody tr:hover td{background:rgba(212,168,42,.06)}
+  tbody tr:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
+  th:first-child,td:first-child{position:sticky;left:0;z-index:1;background:var(--card);font-weight:600;max-width:220px;
+    box-shadow:1px 0 0 var(--line)}
+  th:first-child{background:var(--card2);z-index:2}
+  tbody tr:hover td:first-child{background:#141b28}
+  tfoot td{border-bottom:0;color:var(--muted);font-size:12px;background:var(--card2)}
+  tfoot td:first-child{background:var(--card2)}
+  .pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600;color:#12100a}
+  .empty-row td{color:var(--dim);font-style:italic;cursor:default}
+  .add-row{margin-top:8px}
+  .add-row button{background:none;border:1px dashed var(--line2);color:var(--muted);border-radius:10px;padding:7px 14px;font-size:13px}
+  .add-row button:hover{border-color:var(--gold);color:var(--gold-light)}
+
+  /* ── Item drawer ── */
+  .scrim{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:30;opacity:0;pointer-events:none;transition:opacity .2s}
+  .scrim.show{opacity:1;pointer-events:auto}
+  .drawer{position:fixed;top:0;right:0;bottom:0;width:min(640px,100%);z-index:31;background:var(--bg);border-left:1px solid var(--line2);
+    transform:translateX(100%);transition:transform .22s ease;display:flex;flex-direction:column}
+  .drawer.show{transform:none}
+  .dr-head{display:flex;align-items:flex-start;gap:12px;padding:18px 20px;border-bottom:3px solid var(--gold);background:var(--navy-dark)}
+  .dr-title{flex:1;min-width:0}
+  .dr-title .k{font-size:11px;font-weight:600;letter-spacing:1.6px;text-transform:uppercase;color:var(--gold-dark)}
+  .dr-title h2{font-family:var(--serif);font-size:22px;color:var(--gold-light);line-height:1.2;overflow-wrap:anywhere}
+  .dr-close{width:36px;height:36px;border-radius:50%;border:1px solid var(--line2);background:var(--card2);color:var(--text2);font-size:18px;flex:none}
+  .dr-close:hover{border-color:var(--gold);color:var(--gold-light)}
+  .dr-body{flex:1;overflow-y:auto;padding:18px 20px 30px}
+  .dr-sec{margin-bottom:22px}
+  .dr-sec h3{font-size:12px;font-weight:600;letter-spacing:1.4px;text-transform:uppercase;color:var(--gold);margin-bottom:12px;
+    padding-bottom:6px;border-bottom:1px solid var(--line)}
+  .dr-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 16px}
+  .dr-grid .wide{grid-column:1/-1}
+  .drawer .fh{display:none} /* form guidance; noise when editing on the board */
+  .drawer.ro .fld textarea{min-height:0}
+  .drawer.ro .fld select{appearance:none;-webkit-appearance:none}
+  .drawer.ro .fld input:placeholder-shown,.drawer.ro .fld textarea:placeholder-shown{color:var(--dim)}
+  .dr-meta{font-size:12px;color:var(--dim);margin-top:4px}
+  .dr-foot{display:flex;gap:10px;align-items:center;padding:14px 20px;border-top:1px solid var(--line);background:var(--card)}
+  .dr-foot .grow{flex:1}
+  .btn-danger{background:transparent;border-color:rgba(229,57,53,.45);color:var(--rose)}
+  .btn-danger:hover{background:var(--rose-wash)}
+  @media(max-width:560px){ .dr-grid{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<header class="mast">
+  <div class="mast-in">
+    <div class="logo" id="logo"></div>
+    <div class="mast-title">
+      <div class="mast-kicker">AA Team Projects</div>
+      <h1>Projects Board</h1>
+    </div>
+    <div class="mast-actions" id="mast-actions" hidden>
+      <span class="who" id="who"></span>
+      <a class="btn btn-ghost" href="/projects">Open the form</a>
+      <button class="btn btn-line" id="copy-link" type="button">Copy form link</button>
+      <button class="btn btn-line" id="signout" type="button">Sign out</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap board">
+  <div id="auth"></div>
+  <div id="app" hidden>
+    <div class="note info" id="member-note"></div>
+    <div class="card toolbar">
+      <button class="btn btn-gold" id="new-item" type="button" hidden>+ New item</button>
+      <div class="search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <input id="q" type="search" placeholder="Search agency, project, coder, law firm&hellip;" aria-label="Search projects">
+      </div>
+      <span class="tally" id="tally"></span>
+    </div>
+    <div class="note err" id="load-err"></div>
+    <div id="groups"></div>
+  </div>
+</main>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" aria-hidden="true" role="dialog" aria-labelledby="dr-name">
+  <div class="dr-head">
+    <div class="dr-title"><div class="k" id="dr-kicker"></div><h2 id="dr-name"></h2></div>
+    <button class="dr-close" id="dr-close" type="button" aria-label="Close">&times;</button>
+  </div>
+  <div class="dr-body" id="dr-body"></div>
+  <div class="dr-foot" id="dr-foot">
+    <button class="btn btn-danger" id="dr-delete" type="button">Delete</button>
+    <span class="grow"></span>
+    <span class="note err" id="dr-err" style="padding:6px 10px"></span>
+    <button class="btn btn-line" id="dr-cancel" type="button">Cancel</button>
+    <button class="btn btn-gold" id="dr-save" type="button">Save</button>
+  </div>
+</aside>
+<div class="toast" id="toast"></div>
+
+<script src="/projects/pj.js"></script>
+<script>
+el('logo').innerHTML=PJ_LOGO;
+
+// Table columns, as on the Monday Main table.
+var COLS=[
+  {key:'item_name',       label:'Item'},
+  {key:'agency',          label:'Agency'},
+  {key:'coder_count',     label:'#', num:true},
+  {key:'project_name',    label:'Project'},
+  {key:'coders',          label:'Coder/s'},
+  {key:'supervisor',      label:'Supervisor'},
+  {key:'litigation_type', label:'Litigation'},
+  {key:'status',          label:'Status'},
+  {key:'start_date',      label:'Start', date:true},
+  {key:'end_date',        label:'End', date:true},
+  {key:'languages',       label:'Language'},
+  {key:'review_platform', label:'Platform'}
+];
+var SEARCH_KEYS=PJ_SECTIONS.reduce(function(a,s){return a.concat(s.fields.map(function(f){return f.key;}));},[]);
+
+var ROWS=[], LEADER=false, SORT=null, OPEN=null;
+var CLOSED=(function(){
+  try{ var s=JSON.parse(localStorage.getItem('pj_closed')||'null'); if(s) return s; }catch(e){}
+  var o={}; PJ_GROUPS.forEach(function(g){ if(g.collapsed) o[g.name]=1; }); return o;
+})();
+function saveClosed(){ try{ localStorage.setItem('pj_closed',JSON.stringify(CLOSED)); }catch(e){} }
+
+async function load(){
+  el('load-err').classList.remove('show');
+  try{
+    ROWS=await PJ.api('projects?select=*&order=sort_order.asc,created_at.asc&limit=5000')||[];
+  }catch(e){
+    el('load-err').textContent='Could not load projects: '+e.message; el('load-err').classList.add('show'); ROWS=[];
+  }
+  render();
+}
+
+function matches(r,q){
+  if(!q) return true;
+  for(var i=0;i<SEARCH_KEYS.length;i++){
+    var v=r[SEARCH_KEYS[i]];
+    if(v!=null&&String(v).toLowerCase().indexOf(q)!==-1) return true;
+  }
+  return false;
+}
+
+function cell(r,c){
+  var v=r[c.key];
+  if(v==null||v==='') return '';
+  if(c.date) return esc(pjPrettyDate(v));
+  if(c.key==='status') return '<span class="pill" style="background:'+(PJ_STATUS_COLOR[v]||'#8aa1bf')+'">'+esc(v)+'</span>';
+  return esc(v);
+}
+
+function sorted(list){
+  if(!SORT) return list;
+  var k=SORT.key, d=SORT.dir, num=COLS.some(function(c){return c.key===k&&c.num;});
+  return list.slice().sort(function(a,b){
+    var x=a[k], y=b[k];
+    if(x==null||x==='') return 1; if(y==null||y==='') return -1;
+    if(num) return (Number(x)-Number(y))*d;
+    return String(x).localeCompare(String(y),undefined,{sensitivity:'base',numeric:true})*d;
+  });
+}
+
+function render(){
+  var q=el('q').value.trim().toLowerCase();
+  var shown=0;
+  var head='<tr>'+COLS.map(function(c){
+    var dir=SORT&&SORT.key===c.key?' <span class="dir">'+(SORT.dir>0?'▲':'▼')+'</span>':'';
+    return '<th class="'+(c.num?'num':'')+'" data-sort="'+c.key+'" scope="col">'+esc(c.label)+dir+'</th>';
+  }).join('')+'</tr>';
+
+  el('groups').innerHTML=PJ_GROUPS.map(function(g){
+    var all=ROWS.filter(function(r){return r.board_group===g.name;});
+    var rows=sorted(all.filter(function(r){return matches(r,q);}));
+    shown+=rows.length;
+    if(q&&!rows.length) return '';
+    if(!LEADER&&!all.length) return '';
+    var closed=q?false:!!CLOSED[g.name];
+    var sum=rows.reduce(function(a,r){return a+(Number(r.coder_count)||0);},0);
+    var body=rows.length?rows.map(function(r){
+      return '<tr tabindex="0" data-id="'+esc(r.id)+'">'+COLS.map(function(c){
+        var v=cell(r,c);
+        return '<td class="'+(c.num?'num':'')+'"'+(c.date||c.key==='status'?'':' title="'+esc(r[c.key]||'')+'"')+'>'+v+'</td>';
+      }).join('')+'</tr>';
+    }).join(''):'<tr class="empty-row"><td colspan="'+COLS.length+'">No items</td></tr>';
+    return '<section class="grp'+(closed?' closed':'')+'" style="--gc:'+g.color+'" data-group="'+esc(g.name)+'">'+
+      '<button class="grp-head" type="button" aria-expanded="'+!closed+'">'+
+        '<svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>'+
+        '<h2>'+esc(g.name)+'</h2><span class="cnt">'+(q?rows.length+' of '+all.length:all.length)+' item'+(all.length===1?'':'s')+'</span></button>'+
+      '<div class="tbl-wrap"><table><thead>'+head+'</thead><tbody>'+body+'</tbody>'+
+        '<tfoot><tr>'+COLS.map(function(c){return '<td class="'+(c.num?'num':'')+'">'+(c.num&&sum?sum+' sum':'')+'</td>';}).join('')+'</tr></tfoot>'+
+      '</table></div>'+
+      (LEADER?'<div class="add-row"><button type="button" data-add="'+esc(g.name)+'">+ Add item</button></div>':'')+
+    '</section>';
+  }).join('')||'<div class="card" style="padding:24px;text-align:center;color:var(--muted)">'+
+    (q?'No projects match “'+esc(el('q').value)+'”.':'No projects yet.')+'</div>';
+
+  el('tally').textContent=q?shown+' of '+ROWS.length+' projects':ROWS.length+' projects';
+}
+
+el('groups').addEventListener('click',function(ev){
+  var h=ev.target.closest('.grp-head');
+  if(h){
+    var name=h.parentElement.dataset.group;
+    if(el('q').value.trim()) return;
+    if(CLOSED[name]) delete CLOSED[name]; else CLOSED[name]=1;
+    saveClosed(); render(); return;
+  }
+  var th=ev.target.closest('th[data-sort]');
+  if(th){
+    var k=th.dataset.sort;
+    SORT=!SORT||SORT.key!==k?{key:k,dir:1}:SORT.dir>0?{key:k,dir:-1}:null;
+    render(); return;
+  }
+  var add=ev.target.closest('[data-add]');
+  if(add){ openItem(null,add.dataset.add); return; }
+  var tr=ev.target.closest('tr[data-id]');
+  if(tr) openItem(tr.dataset.id);
+});
+el('groups').addEventListener('keydown',function(ev){
+  var tr=ev.target.closest('tr[data-id]');
+  if(tr&&(ev.key==='Enter'||ev.key===' ')){ ev.preventDefault(); openItem(tr.dataset.id); }
+});
+
+var qTimer;
+el('q').addEventListener('input',function(){ clearTimeout(qTimer); qTimer=setTimeout(render,120); });
+
+// ── Drawer ──────────────────────────────────────────────────────────────────
+function openItem(id,group){
+  var r=id?ROWS.find(function(x){return x.id===id;}):{board_group:group||PJ_INCOMING};
+  if(!r) return;
+  OPEN={id:id,row:r,lastFocus:document.activeElement};
+  var ro=!LEADER;
+  el('drawer').classList.toggle('ro',ro);
+  el('dr-kicker').textContent=id?r.board_group:'New item · '+r.board_group;
+  el('dr-name').textContent=id?(r.item_name||'Untitled'):'New project';
+  el('dr-body').innerHTML=PJ_SECTIONS.map(function(s){
+    return '<div class="dr-sec"><h3>'+esc(s.title)+'</h3><div class="dr-grid">'+s.fields.map(function(f){
+      var wide=f.type==='long'||f.label.length>40;
+      return '<div class="'+(wide?'wide':'')+'">'+pjField(f,r[f.key],ro)+'</div>';
+    }).join('')+'</div></div>';
+  }).join('')+
+  (id?'<div class="dr-meta">Filed '+esc(new Date(r.created_at).toLocaleString())+
+    (r.submitted_name?' by '+esc(r.submitted_name):'')+
+    (r.updated_at&&r.updated_at!==r.created_at?' · last edited '+esc(new Date(r.updated_at).toLocaleString()):'')+'</div>':'');
+  if(ro) el('dr-body').querySelectorAll('textarea').forEach(function(t){ t.rows=Math.max(1,Math.ceil((t.value.length||1)/70)); });
+  pjWireCounts(el('dr-body'));
+  el('dr-foot').hidden=ro;
+  el('dr-delete').hidden=!id;
+  el('dr-err').classList.remove('show');
+  el('dr-save').disabled=false; el('dr-save').textContent=id?'Save':'Create';
+  el('scrim').classList.add('show'); el('drawer').classList.add('show'); el('drawer').setAttribute('aria-hidden','false');
+  document.body.style.overflow='hidden';
+  el('dr-body').scrollTop=0;
+  setTimeout(function(){ (id?el('dr-close'):el('f-item_name')).focus(); },50);
+}
+
+function closeItem(){
+  if(!OPEN) return;
+  el('scrim').classList.remove('show'); el('drawer').classList.remove('show'); el('drawer').setAttribute('aria-hidden','true');
+  document.body.style.overflow='';
+  var f=OPEN.lastFocus; OPEN=null;
+  if(f&&f.focus) f.focus();
+}
+
+el('dr-close').addEventListener('click',closeItem);
+el('dr-cancel').addEventListener('click',closeItem);
+el('scrim').addEventListener('click',closeItem);
+document.addEventListener('keydown',function(ev){ if(ev.key==='Escape'&&OPEN) closeItem(); });
+
+function drErr(msg){ el('dr-err').textContent=msg; el('dr-err').classList.add('show'); }
+
+el('dr-save').addEventListener('click',async function(){
+  if(!OPEN) return;
+  var body=el('dr-body'), btn=el('dr-save');
+  body.querySelectorAll('.fld.bad').forEach(function(f){f.classList.remove('bad');});
+  var rec=pjCollect(body);
+  if(!rec.item_name){ el('f-item_name').closest('.fld').classList.add('bad'); el('f-item_name').focus(); drErr('Give the item a name.'); return; }
+  if(rec.end_date&&rec.start_date&&rec.end_date<rec.start_date){ drErr('The end date is before the start date.'); return; }
+  btn.disabled=true; btn.textContent='Saving…'; el('dr-err').classList.remove('show');
+  try{
+    if(OPEN.id){
+      // Send only what changed so two people editing different fields don't clobber each other.
+      var diff={}, old=OPEN.row;
+      Object.keys(rec).forEach(function(k){
+        var a=old[k]==null?null:String(old[k]), b=rec[k]==null?null:String(rec[k]);
+        if(a!==b) diff[k]=rec[k];
+      });
+      if(Object.keys(diff).length){
+        if(diff.board_group) diff.sort_order=Date.now()/1000; // moved items land at the bottom
+        var upd=await PJ.api('projects?id=eq.'+encodeURIComponent(OPEN.id),{method:'PATCH',headers:{'Prefer':'return=representation'},body:JSON.stringify(diff)});
+        if(!upd||!upd.length) throw new Error('not saved — only leadership can edit projects.');
+        var i=ROWS.findIndex(function(x){return x.id===OPEN.id;}); ROWS[i]=upd[0];
+      }
+      pjToast(Object.keys(diff).length?'Saved':'No changes');
+    }else{
+      rec.submitted_by=PJ.user().id; rec.submitted_name=PJ.name();
+      var ins=await PJ.api('projects',{method:'POST',headers:{'Prefer':'return=representation'},body:JSON.stringify(rec)});
+      ROWS.push(ins[0]);
+      pjToast('Created');
+    }
+    if(CLOSED[rec.board_group]){ delete CLOSED[rec.board_group]; saveClosed(); }
+    closeItem(); render();
+  }catch(e){
+    drErr('Could not save: '+e.message); btn.disabled=false; btn.textContent=OPEN.id?'Save':'Create';
+  }
+});
+
+el('dr-delete').addEventListener('click',async function(){
+  if(!OPEN||!OPEN.id) return;
+  var r=OPEN.row;
+  if(!confirm('Delete “'+(r.item_name||'this item')+'”'+(r.project_name?' ('+r.project_name+')':'')+' for good? This cannot be undone.')) return;
+  try{
+    var del=await PJ.api('projects?id=eq.'+encodeURIComponent(OPEN.id),{method:'DELETE',headers:{'Prefer':'return=representation'}});
+    if(!del||!del.length) throw new Error('not deleted — only leadership can delete projects.');
+    ROWS=ROWS.filter(function(x){return x.id!==OPEN.id;});
+    closeItem(); render(); pjToast('Deleted');
+  }catch(e){ drErr('Could not delete: '+e.message); }
+});
+
+// ── Masthead ────────────────────────────────────────────────────────────────
+el('signout').addEventListener('click',async function(){ await PJ.signOut(); location.reload(); });
+el('new-item').addEventListener('click',function(){ openItem(null,PJ_INCOMING); });
+el('copy-link').addEventListener('click',function(){
+  var link=location.origin+PJ_FORM_PATH;
+  var done=function(){ pjToast('Form link copied'); };
+  var fallback=function(){
+    var t=document.createElement('textarea'); t.value=link; t.style.position='fixed'; t.style.opacity='0';
+    document.body.appendChild(t); t.select();
+    try{ document.execCommand('copy'); done(); }catch(e){ prompt('Copy the form link:',link); }
+    t.remove();
+  };
+  if(navigator.clipboard&&window.isSecureContext) navigator.clipboard.writeText(link).then(done,fallback); else fallback();
+});
+
+pjRequireLogin(el('auth'),'The projects board is for AA Team leadership.').then(function(){
+  LEADER=PJ.isLeader();
+  el('who').textContent='Signed in as '+PJ.name();
+  el('mast-actions').hidden=false;
+  el('new-item').hidden=!LEADER;
+  if(!LEADER){
+    el('member-note').innerHTML='The full board is for leadership. Below are the projects you filed. <a href="/projects">File a new project</a>.';
+    el('member-note').classList.add('show');
+  }
+  el('app').hidden=false;
+  load();
+});
+</script>
+</body>
+</html>

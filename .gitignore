@@ -11,3 +11,6 @@ supabase/.temp/
 .venv/
 __pycache__/
 .superpowers/
+
+# Confidential data imports (client names, contacts). The repo is public.
+supabase/private/

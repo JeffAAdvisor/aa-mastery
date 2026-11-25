@@ -1,0 +1,47 @@
+/* AA Team projects. Builds on /tactical/aa.css (palette, masthead, buttons). */
+[hidden]{display:none!important}
+
+.mast-sub{font-size:13px;color:var(--text2);margin-top:3px}
+.who{font-size:12.5px;color:var(--muted);align-self:center}
+
+/* ── Fields ── */
+.fld{display:flex;flex-direction:column;gap:5px}
+.fl{font-size:13.5px;font-weight:600;color:var(--text)}
+.fl .req{color:var(--gold);font-weight:700}
+.fh{font-size:12.5px;color:var(--muted);line-height:1.45;margin-top:-2px}
+.fld input,.fld select,.fld textarea{width:100%;padding:10px 12px;border-radius:var(--radius-sm);border:1px solid var(--line2);
+  background:var(--card2);color:var(--text);outline:none;font-size:14px;transition:border-color .15s}
+.fld textarea{resize:vertical;min-height:96px;line-height:1.55}
+.fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(--gold)}
+.fld input:disabled,.fld select:disabled,.fld textarea:disabled{opacity:1;background:transparent;border-color:transparent;padding-left:0;
+  color:var(--text);-webkit-text-fill-color:var(--text);resize:none}
+.fld.bad input,.fld.bad select,.fld.bad textarea{border-color:var(--rose)}
+.fld input[type=date]{color-scheme:dark}
+.count{font-size:11.5px;color:var(--dim);text-align:right;margin-top:-2px}
+
+/* ── Login ── */
+.login{max-width:420px;margin:30px auto;padding:26px 24px;display:flex;flex-direction:column;gap:14px}
+.login h2{font-family:var(--serif);font-size:24px;color:var(--gold-light)}
+.login-sub{font-size:13.5px;color:var(--text2);margin-top:-6px}
+.login .btn{justify-content:center;padding:11px 16px;font-size:14px}
+.login-foot{font-size:12.5px;color:var(--muted);text-align:center}
+
+/* ── Form ── */
+.fsec{padding:22px 22px 24px;margin-bottom:16px}
+.fsec h2{font-family:var(--serif);font-size:20px;color:var(--gold-light);margin-bottom:16px;display:flex;align-items:center;gap:10px}
+.fsec h2 .n{font-family:var(--sans);font-size:12px;font-weight:700;color:#12100a;background:var(--gold-metallic);
+  width:24px;height:24px;border-radius:50%;display:grid;place-items:center}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px 18px}
+.fgrid .wide{grid-column:1/-1}
+.intro{padding:16px 20px;margin-bottom:16px;border-left:4px solid var(--gold);font-size:14px;color:var(--text2)}
+.submit-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:6px}
+.submit-row .btn{padding:12px 22px;font-size:14px}
+.done{padding:30px 24px;text-align:center}
+.done h2{font-family:var(--serif);font-size:26px;color:var(--gold-light);margin-bottom:8px}
+.done p{color:var(--text2);margin-bottom:18px}
+.done .btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+
+@media(max-width:640px){
+  .fgrid{grid-template-columns:1fr}
+  .fsec{padding:18px 16px 20px}
+}

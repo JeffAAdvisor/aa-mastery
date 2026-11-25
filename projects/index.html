@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Project Details Form</title>
+<link rel="icon" href="/og-image.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/tactical/aa.css">
+<link rel="stylesheet" href="/projects/pj.css">
+</head>
+<body>
+<header class="mast">
+  <div class="mast-in">
+    <div class="logo" id="logo"></div>
+    <div class="mast-title">
+      <div class="mast-kicker">AA Team Projects</div>
+      <h1>Project Details Form</h1>
+    </div>
+    <div class="mast-actions" id="mast-actions" hidden>
+      <span class="who" id="who"></span>
+      <a class="btn btn-ghost" id="board-link" href="/projects/board" hidden>Open the board</a>
+      <button class="btn btn-line" id="signout" type="button">Sign out</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap narrow">
+  <div id="auth"></div>
+  <div id="app" hidden>
+    <div class="card intro">
+      File this once your project has started. Put <b>N/A</b> in any field that doesn&rsquo;t apply.
+      Fields marked <b style="color:var(--gold)">*</b> are required.
+    </div>
+    <form id="form" novalidate></form>
+  </div>
+  <div id="done" hidden></div>
+  <div class="foot">AA Mastery &middot; Project details go to leadership only.</div>
+</main>
+<div class="toast" id="toast"></div>
+
+<script src="/projects/pj.js"></script>
+<script>
+el('logo').innerHTML=PJ_LOGO;
+
+var FORM_SECTIONS=PJ_SECTIONS.filter(function(s){return !s.board;});
+
+function renderForm(){
+  var n=0;
+  el('form').innerHTML=FORM_SECTIONS.map(function(s){
+    n++;
+    return '<section class="card fsec"><h2><span class="n">'+n+'</span>'+esc(s.title)+'</h2><div class="fgrid">'+
+      s.fields.map(function(f){
+        var val=f.key==='status'?'In Progress':null;
+        var wide=f.type==='long'||f.label.length>48;
+        return '<div class="'+(wide?'wide':'')+'">'+pjField(f,val,false)+'</div>';
+      }).join('')+'</div></section>';
+  }).join('')+
+  '<div class="note err" id="form-err"></div>'+
+  '<div class="submit-row"><button class="btn btn-gold" id="submit" type="submit">Submit project</button></div>';
+  pjWireCounts(el('form'));
+  el('form').querySelectorAll('[data-key]').forEach(function(c){
+    c.addEventListener('input',function(){ c.closest('.fld').classList.remove('bad'); });
+  });
+}
+
+el('form').addEventListener('submit',async function(ev){
+  ev.preventDefault();
+  var form=el('form'), err=el('form-err'), btn=el('submit');
+  form.querySelectorAll('.fld.bad').forEach(function(f){f.classList.remove('bad');});
+  var miss=pjMissing(form,FORM_SECTIONS);
+  if(miss.length){
+    miss.forEach(function(f){ el('f-'+f.key).closest('.fld').classList.add('bad'); });
+    err.textContent='Please fill in: '+miss.map(function(f){return f.label;}).join(', ')+'. Put N/A if a field doesn’t apply.';
+    err.classList.add('show');
+    el('f-'+miss[0].key).focus();
+    return;
+  }
+  var rec=pjCollect(form);
+  if(rec.end_date&&rec.start_date&&rec.end_date<rec.start_date){
+    err.textContent='The end date is before the start date.'; err.classList.add('show'); el('f-end_date').focus(); return;
+  }
+  rec.item_name=rec.agency;
+  rec.board_group=PJ_INCOMING;
+  rec.submitted_by=PJ.user().id;
+  rec.submitted_name=PJ.name();
+  btn.disabled=true; btn.textContent='Submitting…'; err.classList.remove('show');
+  try{
+    await PJ.api('projects',{method:'POST',headers:{'Prefer':'return=minimal'},body:JSON.stringify(rec)});
+    showDone(rec);
+  }catch(e){
+    err.textContent='Could not submit: '+e.message; err.classList.add('show');
+    btn.disabled=false; btn.textContent='Submit project';
+  }
+});
+
+function showDone(rec){
+  el('app').hidden=true;
+  var d=el('done'); d.hidden=false;
+  d.innerHTML='<div class="card done"><h2>Thank you</h2>'+
+    '<p><b>'+esc(rec.agency)+'</b> &middot; '+esc(rec.project_name)+' is on the projects board.</p>'+
+    '<div class="btns"><button class="btn btn-gold" id="again" type="button">Submit another</button>'+
+    (PJ.isLeader()?'<a class="btn btn-ghost" href="'+PJ_BOARD_PATH+'">Open the board</a>':'')+'</div></div>';
+  el('again').addEventListener('click',function(){
+    d.hidden=true; renderForm(); el('app').hidden=false; window.scrollTo(0,0);
+  });
+  window.scrollTo(0,0);
+}
+
+el('signout').addEventListener('click',async function(){ await PJ.signOut(); location.reload(); });
+
+pjRequireLogin(el('auth'),'Project details are confidential.').then(function(){
+  el('who').textContent='Signed in as '+PJ.name();
+  el('board-link').hidden=!PJ.isLeader();
+  el('mast-actions').hidden=false;
+  renderForm();
+  el('app').hidden=false;
+});
+</script>
+</body>
+</html>
