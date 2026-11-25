@@ -109,7 +109,9 @@ create trigger projects_touch before update on public.projects
 
 alter table public.projects enable row level security;
 
-revoke all on public.projects from anon;
+-- Supabase's default privileges hand new tables to anon and authenticated
+-- with ALL, including TRUNCATE, which row-level security does not cover.
+revoke all on public.projects from anon, authenticated;
 grant select, insert, update, delete on public.projects to authenticated;
 
 drop policy if exists projects_leadership_all on public.projects;
