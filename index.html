@@ -2868,6 +2868,7 @@ tr.cir-why td{border-top:none;padding:0 4px 7px;white-space:normal;font-size:.72
     <p class="muted" style="margin-top:4px">Restricted area for supervisors only — Jeff, Glory, Junior, Simon &amp; Achumboro (Aaron). Use the sub-tabs below.</p>
     <div class="rtabs" id="lead-tabs" style="margin-top:14px">
       <button class="rtab active" onclick="showLead('meetings',this)">📝 Tactical Meeting Reports</button>
+      <button class="rtab" onclick="showLead('projects',this)">📋 Projects Board</button>
       <button class="rtab" onclick="showLead('payments',this)">💵 Payments</button>
       <button class="rtab" onclick="showLead('wellbeing',this)">💚 Team Wellbeing</button>
       <button class="rtab" onclick="showLead('qcmetrics',this)">📊 QC Metrics</button>
@@ -2884,6 +2885,19 @@ tr.cir-why td{border-top:none;padding:0 4px 7px;white-space:normal;font-size:.72
       <div id="tactical-present"></div>
       <div id="tactical-form"></div>
       <div id="tactical-history"></div>
+    </div>
+
+    <!-- PROJECTS BOARD: /projects/board in a frame, signed in with this page's session -->
+    <div id="lpane-projects" class="lpane">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 4px">
+        <h3 style="margin:0;flex:1">Projects Board</h3>
+        <button class="btn btn-outline btn-sm" onclick="copyProjectsFormLink(this)">Copy form link</button>
+        <a class="btn btn-outline btn-sm" href="/projects/board" target="_blank" rel="noopener">Open full page</a>
+      </div>
+      <p class="muted" style="margin:0 0 10px">Every AA Team project. New ones arrive from the Project Details form at
+        <a href="/projects" target="_blank" rel="noopener" style="color:var(--gold-light)">/projects</a>. Click any cell to edit it.</p>
+      <iframe id="projects-frame" title="Projects board"
+        style="display:block;width:100%;height:max(640px,calc(100vh - 240px));border:0;border-radius:10px;background:transparent"></iframe>
     </div>
 
     <!-- PAYMENTS -->
@@ -3247,6 +3261,41 @@ function showLead(id,btn){
   if(id==='meetings')loadTactical();
   if(id==='wellbeing')loadWellbeing();
   if(id==='qcmetrics')loadQcRoster('qc-roster-lead');
+  if(id==='projects')loadProjectsBoard();
+}
+
+// The projects board (/projects/board) runs in a same-origin iframe and reads
+// this page's session from here, so leadership signs in once. It never
+// refreshes the token itself: Supabase rotates refresh tokens, and two holders
+// of one would revoke each other.
+window.AA_SESSION={
+  token:function(){return SB.token;},
+  user:function(){return SB.user;},
+  fresh:async function(force){await SB.ensureFresh(force);return SB.token;}
+};
+function loadProjectsBoard(){
+  var f=document.getElementById('projects-frame');
+  var uid=SB.user&&SB.user.id||'';
+  // Load once per signed-in person; a different login gets a fresh board.
+  if(!f||(f.getAttribute('src')&&f.dataset.uid===uid))return;
+  var loaded=!!f.getAttribute('src');
+  f.dataset.uid=uid;
+  if(loaded&&f.contentWindow)f.contentWindow.location.reload();
+  else f.setAttribute('src','/projects/board.html?embed=1');
+}
+function copyProjectsFormLink(btn){
+  var url=location.origin+'/projects';
+  function done(ok){
+    btn.textContent=ok?'Copied':'Press Cmd+C';
+    setTimeout(function(){btn.textContent='Copy form link';},1800);
+  }
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(url).then(function(){done(true);},function(){done(false);});
+  }else{
+    var t=document.createElement('textarea');t.value=url;document.body.appendChild(t);
+    t.select();var ok=false;try{ok=document.execCommand('copy');}catch(e){}
+    document.body.removeChild(t);done(ok);
+  }
 }
 function showTime(id,btn){
   document.querySelectorAll('#lpane-timesheets .tpane').forEach(function(p){p.classList.remove('active');});

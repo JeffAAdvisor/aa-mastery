@@ -123,10 +123,26 @@ function pjToast(msg){
 
 // ── Session ─────────────────────────────────────────────────────────────────
 // Kept in sessionStorage: closes with the tab, never shared across devices.
+//
+// Inside the main app's Leadership section the board runs in a same-origin
+// iframe (/projects/board?embed=1) and borrows that page's session through
+// window.AA_SESSION instead of keeping its own. It must not refresh the token
+// itself: Supabase rotates refresh tokens, so two holders of one would end up
+// revoking each other.
+var PJ_HOST=(function(){
+  try{ return window.parent!==window&&window.parent.AA_SESSION||null; }catch(e){ return null; }
+})();
+
 var PJ={
   session:null,
+  embedded:!!PJ_HOST,
 
   load(){
+    if(PJ_HOST){
+      var tok=PJ_HOST.token(), u=PJ_HOST.user();
+      this.session=tok&&u?{access_token:tok,user:u,expires_at:Infinity}:null;
+      return this.session;
+    }
     try{ this.session=JSON.parse(sessionStorage.getItem('pj_session')||'null'); }catch(e){ this.session=null; }
     return this.session;
   },
@@ -169,6 +185,7 @@ var PJ={
   },
 
   async signOut(){
+    if(PJ_HOST) return; // the main app owns the session
     if(this.session){
       fetch(PJ_SUPABASE_URL+'/auth/v1/logout',{method:'POST',headers:{'apikey':PJ_SUPABASE_ANON_KEY,
         'Authorization':'Bearer '+this.session.access_token}}).catch(function(){});
@@ -179,6 +196,12 @@ var PJ={
   // Access tokens last an hour; renew a minute early.
   async fresh(force){
     var s=this.session; if(!s) return false;
+    if(PJ_HOST){
+      var tok=await PJ_HOST.fresh(force);
+      if(!tok){ this.session=null; return false; }
+      s.access_token=tok; s.user=PJ_HOST.user()||s.user;
+      return true;
+    }
     if(!force&&Date.now()<s.expires_at-60000) return true;
     if(!s.refresh_token){ this.clear(); return false; }
     var res=await fetch(PJ_SUPABASE_URL+'/auth/v1/token?grant_type=refresh_token',{
@@ -213,6 +236,10 @@ var PJ={
 // the main AA Mastery site; password resets happen there.
 function pjRequireLogin(host,blurb){
   PJ.load();
+  if(PJ_HOST&&!PJ.session){
+    host.innerHTML='<div class="card login"><p class="login-sub">Your AA Mastery session has ended. Log in again on the main page.</p></div>';
+    return new Promise(function(){});
+  }
   if(PJ.session) return PJ.fresh().then(function(ok){ return ok?true:pjRequireLogin(host,blurb); });
   return new Promise(function(resolve){
     host.innerHTML=
